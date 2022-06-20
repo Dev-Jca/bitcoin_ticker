@@ -1,11 +1,9 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'coin_data.dart';
 import 'package:flutter/cupertino.dart';
 import 'dart:io' show Platform;
-
-const apiKey = 'F080546B-9A26-420B-B491-CEAD41C47F84';
-String url =
-    'https://rest.coinapi.io/v1/exchangerate/BTC/USD?apikey=F080546B-9A26-420B-B491-CEAD41C47F84';
+import 'package:http/http.dart';
 
 class PriceScreen extends StatefulWidget {
   @override
@@ -13,11 +11,11 @@ class PriceScreen extends StatefulWidget {
 }
 
 class _PriceScreenState extends State<PriceScreen> {
-  String selectedCurrency = 'USD';
+  //B6: Update the default currency to AUD, the first item in the currencyList.
+  String selectedCurrency = 'AUD';
 
 //method for DROPDOWNMENU
   DropdownButton<String> androidDropdown() {
-    //loop to iterate the list of dropdownmenuitems
     List<DropdownMenuItem<String>> dropdownItems = [];
     for (int i = 0; i < currenciesList.length; i++) {
       String currency = currenciesList[i];
@@ -27,14 +25,15 @@ class _PriceScreenState extends State<PriceScreen> {
       );
       dropdownItems.add(newItem);
     }
-//returning dropdownmenu widget of type string
+
     return DropdownButton<String>(
-      // dropdownColor: Colors.lightBlue,
       value: selectedCurrency,
       items: dropdownItems,
       onChanged: (value) {
         setState(() {
           selectedCurrency = value!;
+          //B2: Call getData() when the picker/dropdown changes.
+          getData();
         });
       },
     );
@@ -42,7 +41,6 @@ class _PriceScreenState extends State<PriceScreen> {
 
 //method for CUPERTINOPICKER MENU
   Widget iosPicker() {
-    //loop to iterate the list of pickeritems
     List<Widget> pickerItems = [];
     for (int i = 0; i < currenciesList.length; i++) {
       String currency = currenciesList[i];
@@ -50,18 +48,49 @@ class _PriceScreenState extends State<PriceScreen> {
       pickerItems.add(item);
     }
 
-    //returning  cupertinowidget widget of type string
     return CupertinoPicker(
       itemExtent: 32.0,
       onSelectedItemChanged: (selectedIndex) {
-        print(selectedIndex);
+        setState(() {
+          setState(() {
+            //B1: Save the selected currency to the property selectedCurrency
+            selectedCurrency = currenciesList[selectedIndex];
+            //B2: Call getData() when the picker/dropdown changes.
+            getData();
+          });
+        });
       },
       children: pickerItems,
     );
   }
 
+//12. Create a variable to hold the value and use in our Text Widget. Give the variable a starting value of '?' before the data comes back from the async methods.
+  String bitcoinValueInUSD = '?';
+
+  //11. Create an async method here await the coin data from coin_data.dart
+  void getData() async {
+    try {
+      //We're now passing the selectedCurrency when we call getCoinData().
+      double data = await CoinData().getCoinData(selectedCurrency);
+      //13. We can't await in a setState(). So you have to separate it out into two steps.
+      setState(() {
+        bitcoinValueInUSD = data.toStringAsFixed(0);
+      });
+    } catch (e) {
+      print(e);
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    //14. Call getData() when the screen loads up. We can't call CoinData().getCoinData() directly here because we can't make initState() async.
+    getData();
+  }
+
   @override
   Widget build(BuildContext context) {
+    getData();
     return Scaffold(
       appBar: AppBar(
         title: Text('🤑 Coin Ticker'),
@@ -78,10 +107,12 @@ class _PriceScreenState extends State<PriceScreen> {
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(10.0),
               ),
-              child: const Padding(
+              child: Padding(
                 padding: EdgeInsets.symmetric(vertical: 15.0, horizontal: 28.0),
                 child: Text(
-                  '1 BTC = ? USD',
+                  //15. Update the Text Widget with the data in bitcoinValueInUSD.
+                  //B5: Update the currency name depending on the selectedCurrency.
+                  '1 BTC = $bitcoinValueInUSD $selectedCurrency',
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 20.0,
