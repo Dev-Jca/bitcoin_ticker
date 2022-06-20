@@ -1,4 +1,11 @@
 import 'package:flutter/material.dart';
+import 'coin_data.dart';
+import 'package:flutter/cupertino.dart';
+import 'dart:io' show Platform;
+
+const apiKey = 'F080546B-9A26-420B-B491-CEAD41C47F84';
+String url =
+    'https://rest.coinapi.io/v1/exchangerate/BTC/USD?apikey=F080546B-9A26-420B-B491-CEAD41C47F84';
 
 class PriceScreen extends StatefulWidget {
   @override
@@ -6,6 +13,53 @@ class PriceScreen extends StatefulWidget {
 }
 
 class _PriceScreenState extends State<PriceScreen> {
+  String selectedCurrency = 'USD';
+
+//method for DROPDOWNMENU
+  DropdownButton<String> androidDropdown() {
+    //loop to iterate the list of dropdownmenuitems
+    List<DropdownMenuItem<String>> dropdownItems = [];
+    for (int i = 0; i < currenciesList.length; i++) {
+      String currency = currenciesList[i];
+      var newItem = DropdownMenuItem(
+        child: Text(currency),
+        value: currency,
+      );
+      dropdownItems.add(newItem);
+    }
+//returning dropdownmenu widget of type string
+    return DropdownButton<String>(
+      // dropdownColor: Colors.lightBlue,
+      value: selectedCurrency,
+      items: dropdownItems,
+      onChanged: (value) {
+        setState(() {
+          selectedCurrency = value!;
+        });
+      },
+    );
+  }
+
+//method for CUPERTINOPICKER MENU
+  Widget iosPicker() {
+    //loop to iterate the list of pickeritems
+    List<Widget> pickerItems = [];
+    for (int i = 0; i < currenciesList.length; i++) {
+      String currency = currenciesList[i];
+      Widget item = Text(currency);
+      pickerItems.add(item);
+    }
+
+    //returning  cupertinowidget widget of type string
+    return CupertinoPicker(
+      itemExtent: 32.0,
+      onSelectedItemChanged: (selectedIndex) {
+        print(selectedIndex);
+      },
+      children: pickerItems,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -24,7 +78,7 @@ class _PriceScreenState extends State<PriceScreen> {
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(10.0),
               ),
-              child: Padding(
+              child: const Padding(
                 padding: EdgeInsets.symmetric(vertical: 15.0, horizontal: 28.0),
                 child: Text(
                   '1 BTC = ? USD',
@@ -42,7 +96,7 @@ class _PriceScreenState extends State<PriceScreen> {
             alignment: Alignment.center,
             padding: EdgeInsets.only(bottom: 30.0),
             color: Colors.lightBlue,
-            child: null,
+            child: Platform.isIOS ? iosPicker() : androidDropdown(),
           ),
         ],
       ),
